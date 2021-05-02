@@ -14,6 +14,9 @@ class Camera:
         self.x = x                              # X position of camera in world space
         self.y = y                              # Y position of camera in world space
         self.smoothing = 0                      # Smoothing for camera follow
+        self.bounds = ()                        # Coordinates for the camera follow boundaries
+        self.active_bounds = (False, False,     # Toggle whether the camera follow boundaries should be enforced
+                              False, False)
 
     # Draws a rectangle to the screen
     def draw_rect(self, rect, colour):
@@ -50,6 +53,16 @@ class Camera:
         y = (-self.y * self.zoom) + ((centre[1] + (self.height / 2)) * self.zoom)
         return (x, y), r
 
+    # Draws a line to the screen
+    def draw_line(self, start, end, colour):
+        pygame.draw.line(self.win, colour, self.get_screen_coord(start), self.get_screen_coord(end))
+
+    # Gets the given coordinate as a screen coordinate
+    def get_screen_coord(self, coord):
+        x = (-self.x * self.zoom) + ((coord[0] + (self.width / 2)) * self.zoom)
+        y = (-self.y * self.zoom) + ((coord[1] + (self.height / 2)) * self.zoom)
+        return (x, y)
+
     # Zooms out the camera by one step
     def zoom_out(self):
         self.zoom = max(self.zoom / 2, 1)
@@ -68,20 +81,30 @@ class Camera:
         self.y -= pos[1] / self.zoom
         
     # Moves camera towards a given point with some smoothing
-    def follow(self, pos, smoothing = None):
+    def follow(self, pos, offset = (0, 0), smoothing = None):
         if smoothing == None:
             smoothing = self.smoothing
-        self.x = self.lerp(self.x, pos[0], abs(smoothing - 1))
-        self.y = self.lerp(self.y, pos[1], abs(smoothing - 1))
+        self.x = self.lerp(self.x, pos[0] + offset[0], smoothing)
+        self.y = self.lerp(self.y, pos[1] + offset[1], smoothing)
+        if self.active_bounds:
+            self.enforce_bounds()
 
     # Linear interpolation for following function
     def lerp(self, a, b, w):
-        return a + w * (b - a)
+        return b + w * (a - b)
 
     # Sets boundaries for camera position
-    def set_bounds(self, x, y):
-        pass
+    def set_bounds(self, pos1 = (0, 0), pos2 = (0, 0), active = (True, True, True, True)):
+        self.active_bounds = active
+        self.bounds = ((pos1[0], pos1[1]), (pos2[0], pos2[1]))
 
     # Enforces set camera boundaries
-    def enforce_bounds(pos, x, y):
-        pass
+    def enforce_bounds(self):
+        if self.active_bounds[0] and self.x - (self.width / 2) <= self.bounds[0][0]:
+            self.x = self.bounds[0][0] + (self.width / 2)
+        if self.active_bounds[1] and self.x + (self.width / 2) >= self.bounds[1][0]:
+            self.x = self.bounds[1][0] - (self.width / 2)
+        if self.active_bounds[2] and self.y - (self.height / 2) <= self.bounds[0][1]:
+            self.y = self.bounds[0][1] + (self.height / 2)
+        if self.active_bounds[3] and self.y + (self.height / 2) >= self.bounds[1][1]:
+            self.y = self.bounds[1][1] - (self.height / 2)
