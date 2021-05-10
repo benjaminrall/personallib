@@ -1,8 +1,9 @@
 import pygame
+import personallib.maths as maths
 
 # Python camera controller script
 # Manages camera functionality including panning and zooming the camera
-# Relies on : pygame
+# Dependencies : pygame, personallib.maths
 class Camera:
     def __init__(self, win, x, y, zoom):
         self.zoom = zoom                        # Camera zoom such that zoom = pixels per coordinate increment
@@ -89,14 +90,10 @@ class Camera:
     def follow(self, pos, offset = (0, 0), smoothing = None):
         if smoothing == None:
             smoothing = self.smoothing
-        self.x = self.lerp(self.x, pos[0] + offset[0], smoothing)
-        self.y = self.lerp(self.y, pos[1] + offset[1], smoothing)
+        self.x = maths.lerp(self.x, pos[0] + offset[0], smoothing)
+        self.y = maths.lerp(self.y, pos[1] + offset[1], smoothing)
         if self.active_bounds:
             self.enforce_bounds()
-
-    # Linear interpolation for following function
-    def lerp(self, a, b, w):
-        return b + w * (a - b)
 
     # Sets boundaries for camera position
     def set_bounds(self, pos1 = (0, 0), pos2 = (0, 0), active = (True, True, True, True)):
