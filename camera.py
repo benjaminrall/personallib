@@ -64,10 +64,17 @@ class Camera:
         y = (-self.y * self.zoom) + ((coord[1] + (self.height / 2)) * self.zoom)
         return (x, y)
 
+    # Gets the given coordinate as a world coordinate
+    def get_world_coord(self, coord):
+        centre = (self.width / 2, self.height / 2)
+        x = ((coord[0] - (self.width / 2 * self.zoom))) / self.zoom
+        y = ((coord[1] - (self.height / 2 * self.zoom))) / self.zoom
+        return (x, y)
+
     # Blits a surface onto the screen
-    def blit(self, source, dest): 
+    def blit(self, source, dest, area = None): 
         if self.rect_in_bounds(source.get_rect(topleft=dest)):
-            self.win.blit(source, self.get_screen_coord(dest))
+            self.win.blit(source, self.get_screen_coord(dest), area=area)
 
     # Zooms out the camera by one step
     def zoom_out(self):
