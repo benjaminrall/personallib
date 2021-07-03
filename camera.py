@@ -60,7 +60,8 @@ class Camera:
         y = min(start[1], end[1])
         w = max(start[0], end[0]) - x
         h = max(start[1], end[1]) - y
-        if self.rect_in_bounds((x, y, w, h)):
+        rect = (x, y, w, h)
+        if self.rect_in_bounds(rect):
             pygame.draw.line(self.win, colour, self.get_screen_coord(start), self.get_screen_coord(end))
 
     # Gets the given coordinate as a screen coordinate
@@ -81,15 +82,28 @@ class Camera:
         if self.rect_in_bounds(source.get_rect(topleft=dest)):
             self.win.blit(source, self.get_screen_coord(dest), area=area)
 
+    # Zooms out the camera by set amount
+    def zoom_out(self, amount, limit = 1):
+        self.zoom = max(self.zoom - amount, max(limit, 1))
+        self.width = self.winWidth / self.zoom
+        self.height = self.winHeight / self.zoom
+    
+    # Zooms in the camera by set amount
+    def zoom_in(self, amount, limit = 1024):
+        self.zoom = min(self.zoom + amount, min(limit, 1024))
+        self.width = self.winWidth / self.zoom
+        self.height = self.winHeight / self.zoom
+
     # Zooms out the camera by one step
-    def zoom_out(self):
-        self.zoom = max(self.zoom / 2, 1)
+    def zoom_out_step(self, limit = 1):
+        self.zoom = max(self.zoom / 2, max(limit, 1))
+        print(self.zoom)
         self.width = self.winWidth / self.zoom
         self.height = self.winHeight / self.zoom
     
     # Zooms in the camera by one step
-    def zoom_in(self):
-        self.zoom = min(self.zoom * 2, 1024)
+    def zoom_in_step(self, limit = 1024):
+        self.zoom = min(self.zoom * 2, min(limit, 1024))
         self.width = self.winWidth / self.zoom
         self.height = self.winHeight / self.zoom
     
