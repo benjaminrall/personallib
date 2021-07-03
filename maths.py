@@ -4,6 +4,9 @@ import math
 def lerp(a, b, w):
     return b + w * (a - b)
 
+def sigmoid(x):
+    return 1 / (1 + (math.e ** (-x)))
+
 # Python Matrix object
 # Stores matrices as 2D lists and has static methods to use on matrices
 # Dependencies : None
@@ -56,6 +59,20 @@ class Matrix:
         total = caps + total + "\n" + caps
         return total
     
+    # Static method to add two matrices together
+    @staticmethod
+    def add(m1, m2):
+        if m1.dimensions != m2.dimensions:
+            print("Invalid matrix dimensions")
+            return m1
+        result = Matrix(m1.dimensions[0], m2.dimensions[1])
+        for i in range(m1.dimensions[0]):
+            row = m1.matrix[i]
+            for j, item in enumerate(m2.matrix[i]):
+                row[j] += item
+            result.set_row(i, row)
+        return result
+
     # Static method to multiply two matrices together
     @staticmethod 
     def multiply(m1, m2):
@@ -68,7 +85,6 @@ class Matrix:
             for col in range(m2.dimensions[1]):
                 newRow.append(sum([ i[0] * i[1] for i in zip(m1.matrix[row], m2.columns[col]) ]))
             result.set_row(row, newRow)
-            print(f"Finished row {row + 1}/{result.dimensions[0]}")
         return result
 
     # Returns the determinant of a given matrix
