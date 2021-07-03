@@ -58,7 +58,9 @@ class Camera:
     def draw_line(self, start, end, colour):
         x = min(start[0], end[0])
         y = min(start[1], end[1])
-        if self.rect_in_bounds():
+        w = max(start[0], end[0]) - x
+        h = max(start[1], end[1]) - y
+        if self.rect_in_bounds((x, y, w, h)):
             pygame.draw.line(self.win, colour, self.get_screen_coord(start), self.get_screen_coord(end))
 
     # Gets the given coordinate as a screen coordinate
