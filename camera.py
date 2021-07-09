@@ -1,7 +1,7 @@
 import pygame
 import personallib.maths as maths
 
-# Python camera controller script
+# Python 2D camera controller script
 # Manages camera functionality including panning and zooming the camera
 # Dependencies : pygame, personallib.maths
 class Camera:
@@ -63,6 +63,10 @@ class Camera:
         rect = (x, y, w, h)
         if self.rect_in_bounds(rect):
             pygame.draw.line(self.win, colour, self.get_screen_coord(start), self.get_screen_coord(end))
+
+    def draw_polygon(self, points, colour):
+        screenPoints = [ self.get_screen_coord(point) for point in points]
+        pygame.draw.polygon(self.win, colour, screenPoints)
 
     # Gets the given coordinate as a screen coordinate
     def get_screen_coord(self, coord):
