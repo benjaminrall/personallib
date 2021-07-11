@@ -55,14 +55,14 @@ class Camera:
         return (x, y), r
 
     # Draws a line to the screen
-    def draw_line(self, start, end, colour):
+    def draw_line(self, start, end, colour, width = 1):
         x = min(start[0], end[0])
         y = min(start[1], end[1])
         w = max(start[0], end[0]) - x
         h = max(start[1], end[1]) - y
         rect = (x, y, w, h)
         if self.rect_in_bounds(rect):
-            pygame.draw.line(self.win, colour, self.get_screen_coord(start), self.get_screen_coord(end))
+            pygame.draw.line(self.win, colour, self.get_screen_coord(start), self.get_screen_coord(end), width)
 
     def draw_polygon(self, points, colour):
         screenPoints = [ self.get_screen_coord(point) for point in points]
