@@ -1,4 +1,6 @@
 import math
+import random
+import time
 
 # Linear interpolation for two values
 def lerp(a, b, w):
@@ -17,7 +19,7 @@ class Matrix:
         for i in range(r):          # Default matrix setup
             row = []
             for j in range(c):
-                row.append(0)
+                row.append(random.randint(-10, 10))
             self.matrix.append(row)
         self.dimensions = (r, c)    # Stores matrix dimensions to check validity of operations
         self.calculate_columns()    # Finds columns in matrix
