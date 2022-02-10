@@ -70,15 +70,17 @@ class Camera:
 
     # Gets the given coordinate as a screen coordinate
     def get_screen_coord(self, coord):
-        x = (-self.x * self.zoom) + ((coord[0] + (self.width / 2)) * self.zoom)
-        y = (-self.y * self.zoom) + ((coord[1] + (self.height / 2)) * self.zoom)
+        x = (coord[0] + (self.width / 2) - self.x) * self.zoom
+        y = (coord[1] + (self.height / 2) - self.y) * self.zoom
         return (x, y)
 
     # Gets the given coordinate as a world coordinate
     def get_world_coord(self, coord):
-        centre = (self.width / 2, self.height / 2)
-        x = ((coord[0] - (self.width / 2 * self.zoom))) / self.zoom
-        y = ((coord[1] - (self.height / 2 * self.zoom))) / self.zoom
+        x = (coord[0] - (self.width / 2 * self.zoom)) / self.zoom
+        y = (coord[1] - (self.height / 2 * self.zoom)) / self.zoom
+
+        x = (coord[0] / self.zoom) + self.x - (self.width / 2)
+        y = (coord[1] / self.zoom) + self.y - (self.height / 2)
         return (x, y)
 
     # Blits a surface onto the screen

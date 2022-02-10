@@ -1,6 +1,5 @@
 import math
 import random
-import time
 
 # Linear interpolation for two values
 def lerp(a, b, w):
