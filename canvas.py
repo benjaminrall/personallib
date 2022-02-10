@@ -6,7 +6,7 @@ import pygame
 # Dependencies : pygame, personallib.camera
 class Canvas:
     def __init__(self, width, height):
-        self.elements =[]
+        self.elements = []
         self.width = width
         self.height = height
         self.visible = True
