@@ -1,5 +1,6 @@
 import time
 import pygame
+import win32clipboard
 
 # Python Canvas object
 # A collection of UI elements that can be drawn to the screen in conjunction with the 2D camera controller
@@ -19,6 +20,9 @@ class Canvas:
         for element in self.elements:
             element.draw(self.surface)
         cam.blit(self.surface, cam.get_world_coord((0, 0)))
+
+    def toggle_visible(self):
+        self.visible = not self.visible
 
     def add_element(self, element):
         self.elements.append(element)
@@ -169,13 +173,17 @@ class Button:
         self.set_visible(not self.visible)
 
     def set_enabled(self, state):
+        if self.animated:
+            self.image = self.animation["default"]
+        else:
+            self.drawingColour = self.colour
         self.enabled = state
 
     def toggle_enabled(self):
         self.set_enabled(not self.enabled)
 
     def hover(self, pos):
-        if not self.visible or (self.animated and "hover" not in self.animation) or (self.hoverColour is None and not self.animated):
+        if not self.enabled or not self.visible or (self.animated and "hover" not in self.animation) or (self.hoverColour is None and not self.animated):
             return
         relX = pos[0] - self.x
         relY = pos[1] - self.y
@@ -214,7 +222,7 @@ class Button:
 
 # Python Button object
 # A UI element that creates an interactable text box
-# Dependencies : pygame
+# Dependencies : pygame, time, win32clipboard
 class TextBox:
 
     VALID_KEYS = [
@@ -251,6 +259,8 @@ class TextBox:
         self.borderWidth = borderWidth if self.border else 0
         self.cursorPos = len(self.textContents)
         self.cursorVisible = False
+        self.contents = pygame.Surface((self.width - (2 * self.borderWidth), self.height - (2 * self.borderWidth)),
+                                       pygame.SRCALPHA)
         self.active = False
         self.visible = True
         self.enabled = True
@@ -258,36 +268,42 @@ class TextBox:
         self.update_text()
     
     def draw(self, surface):
+        self.contents.fill((0, 0, 0, 0))
         if self.border:
             pygame.draw.rect(surface, self.borderColour, (self.x, self.y, self.width, self.height))
-        pygame.draw.rect(surface, self.drawingColour, (
-            self.x + self.borderWidth, self.y + self.borderWidth, 
-            self.width - (2 * self.borderWidth), self.height - (2 * self.borderWidth)
+        self.contents.fill(self.drawingColour)
+        self.contents.blit(self.frontText, (
+            (self.frontText.get_height() / 4), (self.height / 2) - (self.frontText.get_height() / 2) - self.borderWidth
         ))
-        surface.blit(self.frontText, (
-            self.x + self.borderWidth + (self.frontText.get_height() / 4), self.y + (self.height / 2) - (self.frontText.get_height() / 2)
-        ))
-        surface.blit(self.endText, (
-            self.x + self.borderWidth + (self.frontText.get_height() / 4) + self.frontText.get_width(),
-            self.y + (self.height / 2) - (self.endText.get_height() / 2)
+        self.contents.blit(self.endText, (
+            (self.frontText.get_height() / 4) + self.frontText.get_width(),
+            (self.height / 2) - (self.endText.get_height() / 2) - self.borderWidth
         ))
         if self.active and self.cursorVisible:
-            pygame.draw.rect(surface, self.textColour, (
-                self.x + self.borderWidth + (self.frontText.get_height() / 4) + self.frontText.get_width(), 
-                self.y + (self.height / 2) - (self.frontText.get_height() / 2), 2, self.frontText.get_height()
+            pygame.draw.rect(self.contents, self.textColour, (
+                (self.frontText.get_height() / 4) + self.frontText.get_width(),
+                (self.height / 2) - (self.frontText.get_height() / 2) - self.borderWidth, 2, self.frontText.get_height()
             ))
+        surface.blit(self.contents, (self.x + self.borderWidth, self.y + self.borderWidth))
         
     def set_visible(self, state):
+        self.active = False
+        self.drawingColour = self.colour
         self.visible = state
 
     def toggle_visible(self):
         self.set_visible(not self.visible)
 
     def set_enabled(self, state):
+        self.active = False
+        self.drawingColour = self.colour
         self.enabled = state
 
     def toggle_enabled(self):
         self.set_enabled(not self.enabled)
+
+    def get_text(self):
+        return self.textContents
 
     def update_text(self):
         usePlaceholder = self.placeholder and self.textContents == ""
@@ -303,7 +319,7 @@ class TextBox:
             self.endText = self.text.text
 
     def hover(self, pos):
-        if not self.visible or self.hoverColour is None or self.active:
+        if not self.enabled or not self.visible or self.hoverColour is None or self.active:
             return
         relX = pos[0] - self.x
         relY = pos[1] - self.y
@@ -389,7 +405,11 @@ class TextBox:
         elif event.key == pygame.K_END or event.key == pygame.K_UP:
             self.cursorPos = len(self.textContents)
         elif event.key == pygame.K_v and pygame.key.get_mods() & pygame.K_LCTRL:
-            
+            win32clipboard.OpenClipboard()
+            data = str(win32clipboard.GetClipboardData()).replace("\n", "")
+            win32clipboard.CloseClipboard()
+            self.textContents = self.textContents[:self.cursorPos] + data + self.textContents[self.cursorPos:]
+            self.cursorPos += len(data)
         elif event.key in TextBox.VALID_KEYS and not pygame.key.get_mods() & pygame.K_LCTRL:
             self.textContents = self.textContents[:self.cursorPos] + event.unicode + self.textContents[self.cursorPos:]
             self.cursorPos += 1

@@ -76,9 +76,6 @@ class Camera:
 
     # Gets the given coordinate as a world coordinate
     def get_world_coord(self, coord):
-        x = (coord[0] - (self.width / 2 * self.zoom)) / self.zoom
-        y = (coord[1] - (self.height / 2 * self.zoom)) / self.zoom
-
         x = (coord[0] / self.zoom) + self.x - (self.width / 2)
         y = (coord[1] / self.zoom) + self.y - (self.height / 2)
         return (x, y)
