@@ -222,7 +222,7 @@ class Button:
 
 # Python Button object
 # A UI element that creates an interactable text box
-# Dependencies : pygame, time, win32clipboard
+# Dependencies : pygame, time, pywin32
 class TextBox:
 
     VALID_KEYS = [
@@ -236,7 +236,9 @@ class TextBox:
         pygame.K_BACKSLASH, pygame.K_CARET, pygame.K_UNDERSCORE, pygame.K_BACKQUOTE
     ]
 
-    def __init__(self, label, pos, dimensions, text, textContents, textColour, colour, placeholderText = "", placeholderColour=None, borderColour=None, borderWidth=1, hoverColour=None, activeColour=None, onEnter=None):
+    def __init__(self, label, pos, dimensions, text, textContents, textColour, colour, placeholderText = "",
+                 placeholderColour=None, borderColour=None, borderWidth=1, hoverColour=None, activeColour=None,
+                 cursorSpeed = 0.5, initialCursorDelay = 1, onEnter=None):
         self.label = label
         self.x = pos[0]
         self.y = pos[1]
@@ -259,6 +261,10 @@ class TextBox:
         self.borderWidth = borderWidth if self.border else 0
         self.cursorPos = len(self.textContents)
         self.cursorVisible = False
+        self.cursorTime = 0
+        self.cursorStartTime = 0
+        self.cursorSpeed = cursorSpeed
+        self.initialCursorDelay = initialCursorDelay
         self.contents = pygame.Surface((self.width - (2 * self.borderWidth), self.height - (2 * self.borderWidth)),
                                        pygame.SRCALPHA)
         self.active = False
@@ -318,6 +324,18 @@ class TextBox:
             self.text.render(self.textContents[self.cursorPos:], self.textColour)
             self.endText = self.text.text
 
+    def enable_cursor(self):
+        self.cursorVisible = True
+        self.cursorTime = time.time()
+        self.cursorStartTime = time.time()
+
+    def update_cursor(self):
+        if not self.active or not self.enabled or not self.visible:
+            return
+        if time.time() - self.cursorStartTime > self.initialCursorDelay and time.time() - self.cursorTime > self.cursorSpeed:
+            self.cursorVisible = not self.cursorVisible
+            self.cursorTime = time.time()
+
     def hover(self, pos):
         if not self.enabled or not self.visible or self.hoverColour is None or self.active:
             return
@@ -335,12 +353,11 @@ class TextBox:
         relY = pos[1] - self.y
         if 0 <= relX <= self.width and 0 <= relY <= self.height:
             self.active = True
-            self.cursorVisible = True
+            self.enable_cursor()
             if self.activeColour is not None:
                 self.drawingColour = self.activeColour
         else:
             self.active = False
-            self.cursorVisible = False
             self.drawingColour = self.colour
 
     def input_key_event(self, event):
@@ -405,12 +422,23 @@ class TextBox:
         elif event.key == pygame.K_END or event.key == pygame.K_UP:
             self.cursorPos = len(self.textContents)
         elif event.key == pygame.K_v and pygame.key.get_mods() & pygame.K_LCTRL:
-            win32clipboard.OpenClipboard()
-            data = str(win32clipboard.GetClipboardData()).replace("\n", "")
+            win32clipboard.OpenClipboard(0)
+            try:
+                result = str(win32clipboard.GetClipboardData()).replace("\n", "")
+            except TypeError:
+                result = ''
             win32clipboard.CloseClipboard()
-            self.textContents = self.textContents[:self.cursorPos] + data + self.textContents[self.cursorPos:]
-            self.cursorPos += len(data)
+            self.textContents = self.textContents[:self.cursorPos] + result + self.textContents[self.cursorPos:]
+            self.cursorPos += len(result)
         elif event.key in TextBox.VALID_KEYS and not pygame.key.get_mods() & pygame.K_LCTRL:
             self.textContents = self.textContents[:self.cursorPos] + event.unicode + self.textContents[self.cursorPos:]
             self.cursorPos += 1
+        self.enable_cursor()
         self.update_text()
+
+# Python Button object
+# A UI element that creates an interactable slider
+# Dependencies : pygame
+class Slider:
+    def __init__(self, label, pos, dimensions, sliderColour, notchSize, notchColour):
+        pass

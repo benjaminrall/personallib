@@ -78,6 +78,7 @@ if __name__ == '__main__':
                     
         win.fill((255, 255, 255))
 
+        ui.run_method_on_type(TextBox, "update_cursor")
         ui.update(cam)
         
         pygame.display.update()
