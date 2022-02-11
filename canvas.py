@@ -30,6 +30,8 @@ class Canvas:
         raise Exception(f"Element '{label}' not found")
 
     def run_method_on_type(self, type, method, params=[]):
+        if not self.visible:
+            return
         for element in self.elements:
             if isinstance(element, type):
                 getattr(element, method)(*params)
@@ -93,6 +95,8 @@ class Text:
         self.label = label
         self.x = pos[0]
         self.y = pos[1]
+        self.fontName = font
+        self.size = size
         self.font = pygame.font.SysFont(font, size)
         self.colour = colour
         self.visible = True
@@ -212,13 +216,32 @@ class Button:
 # A UI element that creates an interactable text box
 # Dependencies : pygame
 class TextBox:
-    def __init__(self, label, pos, dimensions, text, colour, borderColour=None, borderWidth=1, hoverColour=None, activeColour=None, onEnter=None):
+
+    VALID_KEYS = [
+        pygame.K_0, pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9,
+        pygame.K_q, pygame.K_w, pygame.K_e, pygame.K_r, pygame.K_t, pygame.K_y, pygame.K_u, pygame.K_i, pygame.K_o, pygame.K_p,
+        pygame.K_a, pygame.K_s, pygame.K_d, pygame.K_f, pygame.K_g, pygame.K_h, pygame.K_j, pygame.K_k, pygame.K_l, pygame.K_z, 
+        pygame.K_x, pygame.K_c, pygame.K_v, pygame.K_b, pygame.K_n, pygame.K_m, pygame.K_SPACE, pygame.K_EXCLAIM, pygame.K_HASH, 
+        pygame.K_DOLLAR, pygame.K_AMPERSAND, pygame.K_LEFTPAREN, pygame.K_RIGHTPAREN, pygame.K_ASTERISK, pygame.K_PLUS,
+        pygame.K_COMMA, pygame.K_MINUS, pygame.K_PERIOD, pygame.K_SLASH, pygame.K_COLON, pygame.K_SEMICOLON, pygame.K_LESS,
+        pygame.K_GREATER, pygame.K_EQUALS, pygame.K_QUESTION, pygame.K_AT, pygame.K_LEFTBRACKET, pygame.K_RIGHTBRACKET, 
+        pygame.K_BACKSLASH, pygame.K_CARET, pygame.K_UNDERSCORE, pygame.K_BACKQUOTE
+    ]
+
+    def __init__(self, label, pos, dimensions, text, textContents, textColour, colour, placeholderText = "", placeholderColour=None, borderColour=None, borderWidth=1, hoverColour=None, activeColour=None, onEnter=None):
         self.label = label
         self.x = pos[0]
         self.y = pos[1]
         self.width = dimensions[0]
         self.height = dimensions[1]
         self.text = text
+        self.frontText = None
+        self.endText = None
+        self.textContents = textContents
+        self.textColour = textColour
+        self.placeholderText = placeholderText
+        self.placeholderColour = placeholderColour
+        self.placeholder = self.placeholderText != "" and self.placeholderColour is not None
         self.drawingColour = colour
         self.colour = colour
         self.hoverColour = hoverColour
@@ -226,10 +249,13 @@ class TextBox:
         self.border = borderColour is not None and borderWidth > 0
         self.borderColour = borderColour
         self.borderWidth = borderWidth if self.border else 0
+        self.cursorPos = len(self.textContents)
+        self.cursorVisible = False
         self.active = False
         self.visible = True
         self.enabled = True
         self.onEnter = onEnter
+        self.update_text()
     
     def draw(self, surface):
         if self.border:
@@ -238,9 +264,18 @@ class TextBox:
             self.x + self.borderWidth, self.y + self.borderWidth, 
             self.width - (2 * self.borderWidth), self.height - (2 * self.borderWidth)
         ))
-        surface.blit(self.text.text, (
-            self.x + self.borderWidth + (self.text.text.get_height() / 4), self.y + (self.height / 2) - (self.text.text.get_height() / 2)
+        surface.blit(self.frontText, (
+            self.x + self.borderWidth + (self.frontText.get_height() / 4), self.y + (self.height / 2) - (self.frontText.get_height() / 2)
         ))
+        surface.blit(self.endText, (
+            self.x + self.borderWidth + (self.frontText.get_height() / 4) + self.frontText.get_width(),
+            self.y + (self.height / 2) - (self.endText.get_height() / 2)
+        ))
+        if self.active and self.cursorVisible:
+            pygame.draw.rect(surface, self.textColour, (
+                self.x + self.borderWidth + (self.frontText.get_height() / 4) + self.frontText.get_width(), 
+                self.y + (self.height / 2) - (self.frontText.get_height() / 2), 2, self.frontText.get_height()
+            ))
         
     def set_visible(self, state):
         self.visible = state
@@ -253,6 +288,19 @@ class TextBox:
 
     def toggle_enabled(self):
         self.set_enabled(not self.enabled)
+
+    def update_text(self):
+        usePlaceholder = self.placeholder and self.textContents == ""
+        if usePlaceholder:
+            self.text.render(self.textContents[:self.cursorPos], self.textColour)
+            self.frontText = self.text.text
+            self.text.render(self.placeholderText, self.placeholderColour)
+            self.endText = self.text.text
+        else:
+            self.text.render(self.textContents[:self.cursorPos], self.textColour)
+            self.frontText = self.text.text
+            self.text.render(self.textContents[self.cursorPos:], self.textColour)
+            self.endText = self.text.text
 
     def hover(self, pos):
         if not self.visible or self.hoverColour is None or self.active:
@@ -271,11 +319,78 @@ class TextBox:
         relY = pos[1] - self.y
         if 0 <= relX <= self.width and 0 <= relY <= self.height:
             self.active = True
+            self.cursorVisible = True
             if self.activeColour is not None:
                 self.drawingColour = self.activeColour
         else:
             self.active = False
+            self.cursorVisible = False
             self.drawingColour = self.colour
 
-    def input_event(self):
-        pass
+    def input_key_event(self, event):
+        if not self.active or event.type != pygame.KEYDOWN:
+            return
+        if event.key == pygame.K_ESCAPE:
+            self.active = False
+            self.drawingColour = self.colour
+        elif event.key == pygame.K_TAB:
+            self.textContents = self.textContents[:self.cursorPos] + "    " + self.textContents[self.cursorPos:]
+            self.cursorPos += 4
+        elif event.key == pygame.K_DELETE:
+            if self.cursorPos < len(self.textContents):
+                self.textContents = self.textContents[:self.cursorPos] + self.textContents[self.cursorPos + 1:]
+        elif event.key == pygame.K_RETURN:
+            if self.onEnter is not None:
+                self.onEnter()
+            self.active = False
+            self.drawingColour = self.colour
+        elif event.key == pygame.K_BACKSPACE:
+            if self.cursorPos > 0:
+                toRemove = 1
+                if pygame.key.get_mods() & pygame.K_LCTRL:
+                    foundNonSpace = False
+                    toRemove = 0
+                    for char in reversed(self.textContents[:self.cursorPos]):
+                        if char == ' ' and foundNonSpace:
+                            break
+                        elif char != ' ':
+                            foundNonSpace = True
+                        toRemove += 1
+                self.textContents = self.textContents[:self.cursorPos - toRemove] + self.textContents[self.cursorPos:]
+                self.cursorPos -= toRemove
+        elif event.key == pygame.K_LEFT:
+            if pygame.key.get_mods() & pygame.K_LCTRL:
+                foundNonSpace = False
+                toJump = 0
+                for char in reversed(self.textContents[:self.cursorPos]):
+                    if char == ' ' and foundNonSpace:
+                        break
+                    elif char != ' ':
+                        foundNonSpace = True
+                    toJump += 1
+                self.cursorPos -= toJump
+            else:
+                self.cursorPos = max(0, self.cursorPos - 1)
+        elif event.key == pygame.K_RIGHT:
+            if pygame.key.get_mods() & pygame.K_LCTRL:
+                foundNonSpace = False
+                toJump = 0
+                for char in self.textContents[self.cursorPos:]:
+                    if char == ' ' and foundNonSpace:
+                        break
+                    elif char != ' ':
+                        foundNonSpace = True
+                    toJump += 1
+                self.cursorPos += toJump
+            else:
+                self.cursorPos = min(len(self.textContents), self.cursorPos + 1)
+        elif event.key == pygame.K_HOME or event.key == pygame.K_DOWN:
+            self.cursorPos = 0
+        elif event.key == pygame.K_END or event.key == pygame.K_UP:
+            self.cursorPos = len(self.textContents)
+        elif event.key == pygame.K_v and pygame.key.get_mods() & pygame.K_LCTRL:
+            
+        elif event.key in TextBox.VALID_KEYS and not pygame.key.get_mods() & pygame.K_LCTRL:
+            self.textContents = self.textContents[:self.cursorPos] + event.unicode + self.textContents[self.cursorPos:]
+            self.cursorPos += 1
+        self.update_text()

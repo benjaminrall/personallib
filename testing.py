@@ -42,7 +42,8 @@ ui.add_element(Button("button2", (200, 200), (120, 60), Text("buttonText2", (0, 
 ui.add_element(Button("button3", (200, 300), (120, 60), Text("buttonText3", (0, 0), "georgia", 24, "click me!"), (200, 200, 200), (150, 150, 150), (100, 100, 100), onClick=button3))
 ui.add_element(Button("button4", (200, 400), (120, 60), Text("buttonText4", (0, 0), "georgia", 24, "click me!"), (200, 200, 200), (150, 150, 150), (100, 100, 100), onClick=button4))
 ui.add_element(Button("button5", (200, 500), (120, 60), Text("buttonText5", (0, 0), "georgia", 24, "click me!"), (200, 200, 200), (150, 150, 150), (100, 100, 100), onClick=button5))
-ui.add_element(TextBox("textBox1", (400, 100), (160, 30), Text("textBoxText1", (0, 0), "georgia", 16, "enter..."), (250, 250, 250), (0, 0, 0), 1, (230, 230, 230), (200, 200, 200)))
+ui.add_element(TextBox("textBox1", (400, 100), (160, 30), Text("textBoxText1", (0, 0), "georgia", 16, "enter..."), "entered", (0, 0, 0), (250, 250, 250), "enter...", (100, 100, 100), (0, 0, 0), 1, (230, 230, 230), (200, 200, 200)))
+ui.add_element(TextBox("textBox2", (400, 150), (160, 30), Text("textBoxText2", (0, 0), "georgia", 16, "enter..."), "", (0, 0, 0), (250, 250, 250), "enter...", (100, 100, 100), (0, 0, 0), 1, (230, 230, 230), (200, 200, 200)))
 
 # Variables
 running = True
@@ -57,12 +58,7 @@ if __name__ == '__main__':
                 pygame.quit()
                 exit()
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_BACKSPACE:
-                    msg = msg[:-1]
-                else:
-                    msg += event.unicode    # exclude escape, tab, delete, enter
-                ui.find_element("text1").render(msg)
-                ui.run_method_on_type(TextBox, "input_event", [])
+                ui.run_method_on_type(TextBox, "input_key_event", [event])
             elif event.type == pygame.MOUSEMOTION:
                 ui.run_method_on_type(Button, "hover", [pygame.mouse.get_pos()])
                 ui.run_method_on_type(TextBox, "hover", [pygame.mouse.get_pos()])
