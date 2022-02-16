@@ -14,15 +14,18 @@ class Canvas:
         self.surface = pygame.Surface((width, height), pygame.SRCALPHA)
 
     def update(self, cam):
-        self.surface.fill((0, 0, 0, 0))
         if not self.visible:
             return
+        self.surface.fill((0, 0, 0, 0))
         for element in self.elements:
             element.draw(self.surface)
         cam.blit(self.surface, cam.get_world_coord((0, 0)))
 
+    def set_visible(self, state):
+        self.visible = state
+
     def toggle_visible(self):
-        self.visible = not self.visible
+        self.set_visible(not self.visible)
 
     def add_element(self, element):
         self.elements.append(element)
@@ -117,6 +120,42 @@ class Text:
         if not self.visible:
             return
         surface.blit(self.text, (self.x, self.y))
+
+    def set_visible(self, state):
+        self.visible = state
+
+    def toggle_visible(self):
+        self.set_visible(not self.visible)
+
+# Python Text object
+# A UI element that displays text on the screen
+# Dependencies : pygame
+class Image:
+    def __init__(self, label, pos, path="", image=None):
+        if image is None:
+            try:
+                image = pygame.image.load(path)
+            except:
+                raise Exception("Image or valid path must be specified.")
+        self.label = label
+        self.x = pos[0]
+        self.y = pos[1]
+        self.image = image
+        self.visible = True
+
+    def draw(self, surface):
+        if not self.visible:
+            return
+        surface.blit(self.image, (self.x, self.y))
+
+    def set_path(self, path):
+        try:
+            self.image = pygame.image.load(path)
+        except:
+            raise Exception("Invalid path specified.")
+
+    def set_image(self, image):
+        self.image = image
 
     def set_visible(self, state):
         self.visible = state
@@ -238,7 +277,7 @@ class TextBox:
 
     def __init__(self, label, pos, dimensions, text, textContents, textColour, colour, placeholderText = "",
                  placeholderColour=None, borderColour=None, borderWidth=1, hoverColour=None, activeColour=None,
-                 cursorSpeed = 0.5, initialCursorDelay = 1, onEnter=None):
+                 cursorSpeed = 0.5, onEnter=None):
         self.label = label
         self.x = pos[0]
         self.y = pos[1]
@@ -262,11 +301,8 @@ class TextBox:
         self.cursorPos = len(self.textContents)
         self.cursorVisible = False
         self.cursorTime = 0
-        self.cursorStartTime = 0
         self.cursorSpeed = cursorSpeed
-        self.initialCursorDelay = initialCursorDelay
-        self.contents = pygame.Surface((self.width - (2 * self.borderWidth), self.height - (2 * self.borderWidth)),
-                                       pygame.SRCALPHA)
+        self.contents = pygame.Surface((self.width - (2 * self.borderWidth), self.height - (2 * self.borderWidth)), pygame.SRCALPHA)
         self.active = False
         self.visible = True
         self.enabled = True
@@ -311,6 +347,14 @@ class TextBox:
     def get_text(self):
         return self.textContents
 
+    def clear_text(self):
+        self.set_text("")
+
+    def set_text(self, text):
+        self.textContents = text
+        self.cursorPos = len(text)
+        self.update_text()
+
     def update_text(self):
         usePlaceholder = self.placeholder and self.textContents == ""
         if usePlaceholder:
@@ -327,12 +371,11 @@ class TextBox:
     def enable_cursor(self):
         self.cursorVisible = True
         self.cursorTime = time.time()
-        self.cursorStartTime = time.time()
 
     def update_cursor(self):
         if not self.active or not self.enabled or not self.visible:
             return
-        if time.time() - self.cursorStartTime > self.initialCursorDelay and time.time() - self.cursorTime > self.cursorSpeed:
+        if time.time() - self.cursorTime > self.cursorSpeed:
             self.cursorVisible = not self.cursorVisible
             self.cursorTime = time.time()
 
