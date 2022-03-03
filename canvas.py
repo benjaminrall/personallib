@@ -98,7 +98,7 @@ class Text:
 
     pygame.font.init()
 
-    def __init__(self, label, pos, font, size, text="", colour=(0,0,0), antialiasing=True):
+    def __init__(self, label, pos, font, size, text="", colour=(0,0,0), align="left", antialiasing=True):
         self.label = label
         self.x = pos[0]
         self.y = pos[1]
@@ -107,6 +107,7 @@ class Text:
         self.font = pygame.font.SysFont(font, size)
         self.colour = colour
         self.visible = True
+        self.align = align if align in ["left", "centre", "right"] else "left"
         self.render(text, colour, antialiasing)
 
     def render(self, text, colour=None, antialiasing=True):
@@ -119,7 +120,14 @@ class Text:
     def draw(self, surface):
         if not self.visible:
             return
-        surface.blit(self.text, (self.x, self.y))
+        if self.align == "left":
+            x = self.x
+        elif self.align == "centre":
+            x = self.x - (self.text.get_width() / 2)
+        elif self.align == "right":
+            x = self.x - self.text.get_width()
+        y = self.y - (self.text.get_height() / 2)
+        surface.blit(self.text, (x, y))
 
     def set_visible(self, state):
         self.visible = state
