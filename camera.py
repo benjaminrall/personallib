@@ -5,7 +5,7 @@ import personallib.maths as maths
 # Manages camera functionality including panning and zooming the camera
 # Dependencies : pygame, personallib.maths
 class Camera:
-    def __init__(self, win, x, y, zoom):
+    def __init__(self, win: pygame.Surface, x: float, y: float, zoom: float):
         self.zoom = zoom                        # Camera zoom such that zoom = pixels per coordinate increment
         self.win = win                          # Pygame window to draw onto
         self.winWidth = win.get_width()         # Pygame window width
@@ -106,7 +106,7 @@ class Camera:
     
     # Zooms in the camera by one step
     def zoom_in_step(self, limit = 1024):
-        self.zoom = min(self.zoom * 2, min(limit, 1024))
+        self.zoom = min(self.zoom * 2, limit) if limit > 0 else self.zoom * 2
         self.width = self.winWidth / self.zoom
         self.height = self.winHeight / self.zoom
     
