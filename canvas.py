@@ -486,10 +486,3 @@ class TextBox:
             self.cursorPos += 1
         self.enable_cursor()
         self.update_text()
-
-# Python Button object
-# A UI element that creates an interactable slider
-# Dependencies : pygame
-class Slider:
-    def __init__(self, label, pos, dimensions, sliderColour, notchSize, notchColour):
-        pass

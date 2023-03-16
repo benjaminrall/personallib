@@ -2,17 +2,18 @@ import math
 import random
 
 # Linear interpolation for two values
-def lerp(a, b, w):
+def lerp(a: float, b: float, w: float) -> float:
     return b + w * (a - b)
 
-def sigmoid(x):
+# Sigmoid function
+def sigmoid(x: float) -> float:
     return 1 / (1 + (math.e ** (-x)))
 
 # Python Matrix object
 # Stores matrices as 2D lists and has static methods to use on matrices
 # Dependencies : None
 class Matrix:
-    def __init__(self, r, c):
+    def __init__(self, r: int, c: int) -> None:
         self.matrix = []            # Matrix stored as a 2D list
         self.columns = []           # A list of the columns in the matrix
         for i in range(r):          # Default matrix setup
